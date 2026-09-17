@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api.service';
@@ -273,7 +273,10 @@ export class UsuarioListComponent implements OnInit {
     rol: 'MECANICO'
   };
 
-  constructor(private apiService: ApiService) {}
+  constructor(
+    private apiService: ApiService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.loadUsers();
@@ -282,15 +285,18 @@ export class UsuarioListComponent implements OnInit {
   loadUsers(): void {
     this.isLoading = true;
     this.errorMessage = '';
+    this.cdr.detectChanges();
     this.apiService.listarUsuarios().subscribe({
       next: (data) => {
         this.users = data;
         this.filteredUsers = data;
         this.isLoading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.isLoading = false;
         this.errorMessage = 'No se pudieron cargar los usuarios del servidor.';
+        this.cdr.detectChanges();
         console.error(err);
       }
     });
@@ -306,6 +312,7 @@ export class UsuarioListComponent implements OnInit {
         u.nombreCompleto.toLowerCase().includes(query)
       );
     }
+    this.cdr.detectChanges();
   }
 
   openCreateModal(): void {
@@ -317,6 +324,7 @@ export class UsuarioListComponent implements OnInit {
       rol: 'MECANICO'
     };
     this.isModalOpen = true;
+    this.cdr.detectChanges();
   }
 
   openEditModal(user: User): void {
@@ -329,10 +337,12 @@ export class UsuarioListComponent implements OnInit {
       rol: user.rol
     };
     this.isModalOpen = true;
+    this.cdr.detectChanges();
   }
 
   closeModal(): void {
     this.isModalOpen = false;
+    this.cdr.detectChanges();
   }
 
   saveUser(): void {
