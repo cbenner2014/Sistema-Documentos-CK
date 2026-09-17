@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   cottonknit-db:
     image: mysql:8.0
