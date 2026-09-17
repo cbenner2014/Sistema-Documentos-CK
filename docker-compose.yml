@@ -1,20 +1,42 @@
 version: '3.8'
 
 services:
+  cottonknit-db:
+    image: mysql:8.0
+    container_name: cottonknit-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: cottonknit
+      MYSQL_ROOT_PASSWORD: rootpassword123
+    volumes:
+      - cottonknit_mysql_data:/var/lib/mysql
+    networks:
+      - internal-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpassword123"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
   cottonknit-backend:
     build:
       context: ./CottonKnit
       dockerfile: Dockerfile
     container_name: cottonknit-backend
     restart: unless-stopped
+    depends_on:
+      cottonknit-db:
+        condition: service_healthy
     environment:
-      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
-      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
-      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=${SPRING_JPA_HIBERNATE_DDL_AUTO:-update}
+      - SPRING_DATASOURCE_URL=jdbc:mysql://cottonknit-db:3306/cottonknit?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=rootpassword123
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       - TZ=America/Lima
     networks:
-      - proxy-tier
+      - internal-network
+      - proxy-network
 
   cottonknit-frontend:
     build:
@@ -25,9 +47,14 @@ services:
     depends_on:
       - cottonknit-backend
     networks:
-      - proxy-tier
+      - proxy-network
+
+volumes:
+  cottonknit_mysql_data:
 
 networks:
-  proxy-tier:
+  internal-network:
+    driver: bridge
+  proxy-network:
     external: true
-    name: ${NPM_NETWORK_NAME:-npm-network}
+    name: ${NPM_NETWORK_NAME:-proxy-network}
