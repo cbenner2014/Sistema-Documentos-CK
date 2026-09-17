@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  cottonknit-backend:
+    build:
+      context: ./CottonKnit
+      dockerfile: Dockerfile
+    container_name: cottonknit-backend
+    restart: unless-stopped
+    environment:
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${SPRING_JPA_HIBERNATE_DDL_AUTO:-update}
+      - TZ=America/Lima
+    networks:
+      - proxy-tier
+
+  cottonknit-frontend:
+    build:
+      context: ./Frontend-CK
+      dockerfile: Dockerfile
+    container_name: cottonknit-frontend
+    restart: unless-stopped
+    depends_on:
+      - cottonknit-backend
+    networks:
+      - proxy-tier
+
+networks:
+  proxy-tier:
+    external: true
+    name: ${NPM_NETWORK_NAME:-npm-network}

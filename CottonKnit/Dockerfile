@@ -1,14 +1,18 @@
-# Stage 1: Build the application
-FROM maven:3.9-eclipse-temurin-21-alpine AS build
+# Etapa 1: Compilación de Spring Boot con Maven y Java 21
+FROM maven:3.9.6-eclipse-temurin-21-alpine AS build
 WORKDIR /app
-COPY pom.xml .
-RUN mvn dependency:go-offline -B
-COPY src ./src
-RUN mvn package -DskipTests -B
 
-# Stage 2: Run the application
+COPY pom.xml ./
+RUN mvn dependency:go-offline -B
+
+COPY src ./src
+RUN mvn clean package -DskipTests
+
+# Etapa 2: Imagen de ejecución JRE 21 ultra liviana
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
+
 COPY --from=build /app/target/CottonKnit-0.0.1-SNAPSHOT.jar app.jar
+
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
