@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -98,8 +98,11 @@ export class LoginComponent {
   isLoading = false;
   errorMessage = '';
 
-  constructor(private authService: AuthService, private router: Router) {
-    // Redirigir al dashboard si ya hay sesión activa
+  constructor(
+    private authService: AuthService, 
+    private router: Router,
+    private cdr: ChangeDetectorRef
+  ) {
     if (this.authService.isLoggedIn()) {
       this.router.navigate(['/dashboard']);
     }
@@ -108,17 +111,21 @@ export class LoginComponent {
   onSubmit(): void {
     if (!this.username.trim() || !this.password.trim()) {
       this.errorMessage = 'Por favor ingresa todos los campos.';
+      this.cdr.detectChanges();
       return;
     }
 
     this.isLoading = true;
     this.errorMessage = '';
+    this.cdr.detectChanges();
 
     this.authService.login({ 
       username: this.username.trim(), 
       password: this.password.trim() 
     }).subscribe({
       next: () => {
+        this.isLoading = false;
+        this.cdr.detectChanges();
         this.router.navigate(['/dashboard']);
       },
       error: (err) => {
@@ -128,6 +135,7 @@ export class LoginComponent {
         } else {
           this.errorMessage = 'Ocurrió un error inesperado al conectar al servidor.';
         }
+        this.cdr.detectChanges();
       }
     });
   }
