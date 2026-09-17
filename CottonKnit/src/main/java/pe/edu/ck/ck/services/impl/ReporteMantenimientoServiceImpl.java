@@ -29,6 +29,11 @@ public class ReporteMantenimientoServiceImpl implements IReporteMantenimientoSer
     }
 
     @Override
+    public List<ReporteMantenimiento> listarPorUsuario(Integer usuarioId) {
+        return repository.findByUsuarioId(usuarioId);
+    }
+
+    @Override
     public List<ReporteMantenimiento> listarPorMaquina(String maquinaId) {
         return repository.findByMaquinaId(maquinaId);
     }

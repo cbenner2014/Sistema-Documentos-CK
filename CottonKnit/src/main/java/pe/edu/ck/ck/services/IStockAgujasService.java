@@ -6,4 +6,5 @@ import java.util.List;
 public interface IStockAgujasService {
     StockAgujas guardar(StockAgujas stock);
     List<StockAgujas> listarTodo();
+    List<StockAgujas> listarPorUsuario(Integer usuarioId);
 }

@@ -11,6 +11,7 @@ import { LucideLayoutDashboard, LucidePlus, LucideWrench, LucideFileText, Lucide
 import { CatalogoService, CatalogoError } from '../../../services/catalogo.service';
 import { PdfService } from '../../../services/pdf.service';
 import { ApiService } from '../../../services/api.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-mantenimiento-list',
@@ -217,6 +218,7 @@ export class MantenimientoListComponent implements OnInit {
   groupedHistory: any[] = [];
   catalogos: CatalogoError[] = [];
   showForm = false;
+  userMachines: string[] = [];
   
   newRecord = {
     fecha: new Date().toISOString().split('T')[0],
@@ -230,6 +232,7 @@ export class MantenimientoListComponent implements OnInit {
     private catalogoService: CatalogoService,
     private pdfService: PdfService,
     private apiService: ApiService,
+    private authService: AuthService,
     private snackBar: MatSnackBar,
     private cdr: ChangeDetectorRef
   ) {}
@@ -237,6 +240,11 @@ export class MantenimientoListComponent implements OnInit {
   ngOnInit(): void {
     this.loadCatalogos();
     this.loadReports();
+    this.apiService.listarMaquinas().subscribe(machines => {
+      if (machines && machines.length > 0) {
+        this.userMachines = machines.map((m: any) => m.codigo);
+      }
+    });
   }
 
   loadCatalogos() {
@@ -275,7 +283,8 @@ export class MantenimientoListComponent implements OnInit {
   }
 
   generateMagicData() {
-    const machines = ['CR-041', 'CR-057', 'CR-253', 'R3-038', 'R4-188', 'R4-121', 'RP-065', 'RB-062', 'RC-050', 'RP-004'];
+    const defaultMachines = ['CR-041', 'CR-057', 'CR-253', 'R3-038', 'R4-188', 'R4-121', 'RP-065', 'RB-062', 'RC-050', 'RP-004'];
+    const machines = (this.userMachines && this.userMachines.length > 0) ? this.userMachines : defaultMachines;
     const pCodes = [1, 6, 10, 17, 9, 16, 21, 2, 7, 8, 4, 13];
     const bId = 'BATCH-' + Math.random().toString(36).substr(2, 9).toUpperCase();
     const magicEntries: any[] = [];
@@ -295,7 +304,7 @@ export class MantenimientoListComponent implements OnInit {
         const startH = hour.toString().padStart(2, '0');
         const startM = min.toString().padStart(2, '0');
         
-        // Calcular hora de término (evitando que los minutos pasen de 59)
+        // Calcular hora de término
         const duration = 15 + Math.floor(Math.random() * 20);
         let totalMin = min + duration;
         let endH = hour + Math.floor(totalMin / 60);
@@ -327,9 +336,10 @@ export class MantenimientoListComponent implements OnInit {
   }
 
   downloadBatch(group: any) {
+    const user = this.authService.getCurrentUser();
     this.pdfService.generateMaintenancePDF(group.items, {
       linea: 'Muestras / Producción',
-      mecanico: 'Darwin'
+      mecanico: user?.nombreCompleto || 'Darwin'
     });
   }
 
@@ -342,7 +352,38 @@ export class MantenimientoListComponent implements OnInit {
     }
   }
 
-  isFormValid() { return this.newRecord.fecha && this.newRecord.maquinaId && this.newRecord.catalogoErrorId; }
-  toggleForm() { this.showForm = !this.showForm; }
-  addRecord() { /* ... */ }
+  isFormValid() { 
+    return this.newRecord.fecha && this.newRecord.maquinaId && this.newRecord.catalogoErrorId; 
+  }
+
+  toggleForm() { 
+    this.showForm = !this.showForm; 
+  }
+
+  addRecord() {
+    if (!this.isFormValid()) return;
+    const recordPayload = {
+      fecha: this.newRecord.fecha,
+      maquinaId: this.newRecord.maquinaId.trim().toUpperCase(),
+      catalogoError: { id: this.newRecord.catalogoErrorId },
+      horaParada: this.newRecord.horaParada ? `${this.newRecord.horaParada}:00` : null,
+      horaTermino: this.newRecord.horaTermino ? `${this.newRecord.horaTermino}:00` : null,
+      batchId: 'MANUAL-' + this.newRecord.fecha
+    };
+
+    this.apiService.guardarReporteMantenimiento(recordPayload).subscribe({
+      next: () => {
+        this.snackBar.open('Registro de mantenimiento guardado exitosamente', 'OK', { duration: 3000 });
+        this.showForm = false;
+        this.newRecord.maquinaId = '';
+        this.newRecord.catalogoErrorId = null;
+        this.newRecord.horaParada = '';
+        this.newRecord.horaTermino = '';
+        this.loadReports();
+      },
+      error: (err: any) => {
+        this.snackBar.open('Error al guardar reporte técnico', 'Cerrar', { duration: 4000 });
+      }
+    });
+  }
 }

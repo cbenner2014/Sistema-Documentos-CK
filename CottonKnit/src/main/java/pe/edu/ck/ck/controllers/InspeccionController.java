@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pe.edu.ck.ck.entity.InspeccionMaquina;
+import pe.edu.ck.ck.entity.Usuario;
 import pe.edu.ck.ck.services.IInspeccionService;
 import java.util.List;
 
@@ -16,17 +17,34 @@ public class InspeccionController {
     private IInspeccionService service;
 
     @GetMapping
-    public ResponseEntity<List<InspeccionMaquina>> listar() {
+    public ResponseEntity<List<InspeccionMaquina>> listar(@RequestParam(required = false) Integer userId) {
+        if (userId != null) {
+            return ResponseEntity.ok(service.listarPorUsuario(userId));
+        }
         return ResponseEntity.ok(service.listar());
     }
 
     @PostMapping
-    public ResponseEntity<InspeccionMaquina> guardar(@RequestBody InspeccionMaquina inspeccion) {
+    public ResponseEntity<InspeccionMaquina> guardar(@RequestBody InspeccionMaquina inspeccion, @RequestParam(required = false) Integer userId) {
+        if (inspeccion.getUsuario() == null && userId != null) {
+            Usuario u = new Usuario();
+            u.setId(userId);
+            inspeccion.setUsuario(u);
+        }
         return ResponseEntity.ok(service.guardar(inspeccion));
     }
 
     @PostMapping("/batch")
-    public ResponseEntity<List<InspeccionMaquina>> guardarLote(@RequestBody List<InspeccionMaquina> inspecciones) {
+    public ResponseEntity<List<InspeccionMaquina>> guardarLote(@RequestBody List<InspeccionMaquina> inspecciones, @RequestParam(required = false) Integer userId) {
+        if (userId != null) {
+            for (InspeccionMaquina ins : inspecciones) {
+                if (ins.getUsuario() == null) {
+                    Usuario u = new Usuario();
+                    u.setId(userId);
+                    ins.setUsuario(u);
+                }
+            }
+        }
         return ResponseEntity.ok(service.guardarLote(inspecciones));
     }
 

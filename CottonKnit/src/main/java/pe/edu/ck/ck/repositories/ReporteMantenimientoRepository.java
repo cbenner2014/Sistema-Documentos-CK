@@ -9,5 +9,6 @@ import java.util.List;
 public interface ReporteMantenimientoRepository extends JpaRepository<ReporteMantenimiento, Integer> {
     // Útil para filtrar reportes por máquina específica
     List<ReporteMantenimiento> findByMaquinaId(String maquinaId);
+    List<ReporteMantenimiento> findByUsuarioId(Integer usuarioId);
     void deleteByBatchId(String batchId);
 }

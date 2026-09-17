@@ -10,6 +10,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { LucidePlus, LucideCheckCircle, LucideTrash2, LucideEdit, LucideSettings } from '@lucide/angular';
 import { ApiService } from '../../services/api.service';
+import { AuthService } from '../../services/auth.service';
 import { MaquinaDialogComponent } from './maquina-dialog.component';
 
 @Component({
@@ -123,6 +124,17 @@ import { MaquinaDialogComponent } from './maquina-dialog.component';
               <td mat-cell *matCellDef="let element" class="px-6 py-4 text-sm font-medium text-slate-500 font-mono"> {{element.serie || '---'}} </td>
             </ng-container>
 
+            <!-- Mecanico Column (Solo visible para Admin) -->
+            <ng-container matColumnDef="mecanico">
+              <th mat-header-cell *matHeaderCellDef class="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/30"> Mecánico Responsable </th>
+              <td mat-cell *matCellDef="let element" class="px-6 py-4">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold"
+                      [ngClass]="element.usuario ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-slate-100 text-slate-600'">
+                  {{ element.usuario?.nombreCompleto || 'Inventario General' }}
+                </span>
+              </td>
+            </ng-container>
+
             <!-- Estado Column -->
             <ng-container matColumnDef="estado">
               <th mat-header-cell *matHeaderCellDef class="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/30 text-center"> Estado </th>
@@ -168,8 +180,11 @@ import { MaquinaDialogComponent } from './maquina-dialog.component';
            <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
              <svg lucideSettings class="w-8 h-8 text-slate-200"></svg>
            </div>
-           <h4 class="font-bold text-slate-800">No se encontraron máquinas</h4>
-           <p class="text-sm text-slate-400 mt-1">Prueba con otro código o ajusta los filtros.</p>
+           <h4 class="font-bold text-slate-800 text-lg">No tienes máquinas registradas todavía</h4>
+           <p class="text-sm text-slate-400 mt-1 max-w-sm font-medium">Como mecánico independiente, cada usuario gestiona sus propias máquinas. Registra tus máquinas asignadas con el botón superior.</p>
+           <button (click)="openDialog()" class="mt-4 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold px-5 py-2.5 rounded-xl text-xs transition-colors shadow-sm">
+             + Registrar mi primera máquina
+           </button>
         </div>
       </div>
     </div>
@@ -184,15 +199,24 @@ export class MaquinaListComponent implements OnInit {
   dataSource: any[] = [];
   filteredData: any[] = [];
   totalActivas = 0;
+  isAdmin = false;
 
   constructor(
     private apiService: ApiService,
+    private authService: AuthService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
+    const user = this.authService.getCurrentUser();
+    this.isAdmin = user?.rol === 'ADMIN';
+    if (this.isAdmin) {
+      this.displayedColumns = ['codigo', 'linea', 'marca', 'serie', 'mecanico', 'estado', 'acciones'];
+    } else {
+      this.displayedColumns = ['codigo', 'linea', 'marca', 'serie', 'estado', 'acciones'];
+    }
     this.loadMaquinas();
   }
 

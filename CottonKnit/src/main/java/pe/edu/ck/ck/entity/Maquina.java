@@ -11,7 +11,7 @@ public class Maquina {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String codigo;
 
     private String linea;
@@ -29,4 +29,8 @@ public class Maquina {
     private String fechaCambioAceite;
 
     private boolean activa = true;
+
+    @ManyToOne
+    @JoinColumn(name = "usuario_id", nullable = true)
+    private Usuario usuario;
 }

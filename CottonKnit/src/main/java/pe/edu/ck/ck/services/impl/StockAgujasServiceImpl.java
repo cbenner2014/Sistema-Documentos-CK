@@ -29,4 +29,9 @@ public class StockAgujasServiceImpl implements IStockAgujasService {
     public List<StockAgujas> listarTodo() {
         return repository.findAll();
     }
+
+    @Override
+    public List<StockAgujas> listarPorUsuario(Integer usuarioId) {
+        return repository.findByUsuarioId(usuarioId);
+    }
 }

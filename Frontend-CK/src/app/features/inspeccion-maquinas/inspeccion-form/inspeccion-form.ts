@@ -7,6 +7,7 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../../services/api.service';
 import { PdfService } from '../../../services/pdf.service';
+import { AuthService } from '../../../services/auth.service';
 import { Router } from '@angular/router';
 import { LucideCheckCircle, LucideZap, LucideSave, LucideSettings } from '@lucide/angular';
 
@@ -275,9 +276,16 @@ export class InspeccionFormComponent {
   constructor(
     private apiService: ApiService, 
     private pdfService: PdfService,
+    private authService: AuthService,
     private snackBar: MatSnackBar, 
     private router: Router
-  ) {}
+  ) {
+    const user = this.authService.getCurrentUser();
+    if (user) {
+      this.model.mecanico = user.nombreCompleto;
+      this.model.codigoMecanico = 'MEC-' + user.id;
+    }
+  }
 
   autofillOK() {
     this.cabezales.forEach(i => i.status = 'OK');

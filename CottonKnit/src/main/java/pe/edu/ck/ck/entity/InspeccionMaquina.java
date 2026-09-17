@@ -55,4 +55,9 @@ public class InspeccionMaquina {
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "inspeccion_id")
     private List<InspeccionDetalle> detalles;
+
+    @ManyToOne
+    @JoinColumn(name = "usuario_id", nullable = true)
+    @JsonProperty("usuario")
+    private Usuario usuario;
 }

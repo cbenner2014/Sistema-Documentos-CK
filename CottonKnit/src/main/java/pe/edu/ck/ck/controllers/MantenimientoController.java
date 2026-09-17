@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pe.edu.ck.ck.entity.ReporteMantenimiento;
+import pe.edu.ck.ck.entity.Usuario;
 import pe.edu.ck.ck.services.IReporteMantenimientoService;
 import java.util.List;
 
@@ -16,17 +17,34 @@ public class MantenimientoController {
     private IReporteMantenimientoService service;
 
     @PostMapping
-    public ResponseEntity<ReporteMantenimiento> crear(@RequestBody ReporteMantenimiento reporte) {
+    public ResponseEntity<ReporteMantenimiento> crear(@RequestBody ReporteMantenimiento reporte, @RequestParam(required = false) Integer userId) {
+        if (reporte.getUsuario() == null && userId != null) {
+            Usuario u = new Usuario();
+            u.setId(userId);
+            reporte.setUsuario(u);
+        }
         return ResponseEntity.ok(service.registrar(reporte));
     }
 
     @PostMapping("/batch")
-    public ResponseEntity<List<ReporteMantenimiento>> crearLote(@RequestBody List<ReporteMantenimiento> reportes) {
+    public ResponseEntity<List<ReporteMantenimiento>> crearLote(@RequestBody List<ReporteMantenimiento> reportes, @RequestParam(required = false) Integer userId) {
+        if (userId != null) {
+            for (ReporteMantenimiento r : reportes) {
+                if (r.getUsuario() == null) {
+                    Usuario u = new Usuario();
+                    u.setId(userId);
+                    r.setUsuario(u);
+                }
+            }
+        }
         return ResponseEntity.ok(service.registrarLote(reportes));
     }
 
     @GetMapping
-    public ResponseEntity<List<ReporteMantenimiento>> listar() {
+    public ResponseEntity<List<ReporteMantenimiento>> listar(@RequestParam(required = false) Integer userId) {
+        if (userId != null) {
+            return ResponseEntity.ok(service.listarPorUsuario(userId));
+        }
         return ResponseEntity.ok(service.listarTodo());
     }
 

@@ -10,6 +10,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { LucideLayoutDashboard, LucidePlus, LucideClipboardCheck, LucideFileText, LucideZap, LucideHistory, LucideTrash2 } from '@lucide/angular';
 import { ApiService } from '../../../services/api.service';
 import { PdfService } from '../../../services/pdf.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-inspeccion-list',
@@ -158,16 +159,23 @@ export class InspeccionListComponent implements OnInit {
   allInspections: any[] = [];
   groupedHistory: any[] = [];
   magicCount: number = 2;
+  userMachines: string[] = [];
 
   constructor(
     private apiService: ApiService,
     private pdfService: PdfService,
+    private authService: AuthService,
     private snackBar: MatSnackBar,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     this.loadInspections();
+    this.apiService.listarMaquinas().subscribe(machines => {
+      if (machines && machines.length > 0) {
+        this.userMachines = machines.map((m: any) => m.codigo);
+      }
+    });
   }
 
   loadInspections() {
@@ -198,9 +206,11 @@ export class InspeccionListComponent implements OnInit {
   }
 
   generateMagicInspections() {
-    const machines = ['RY-203', 'RB-045', 'RC-012', 'GR-102', 'CR-088', 'RS-022', 'RB-009', 'RY-055', 'RC-067', 'GR-021'];
+    const defaultMachines = ['RY-203', 'RB-045', 'RC-012', 'GR-102', 'CR-088', 'RS-022', 'RB-009', 'RY-055', 'RC-067', 'GR-021'];
+    const machines = (this.userMachines && this.userMachines.length > 0) ? this.userMachines : defaultMachines;
     const bId = 'INS-BATCH-' + Math.random().toString(36).substr(2, 6).toUpperCase();
     const today = new Date().toISOString().split('T')[0];
+    const user = this.authService.getCurrentUser();
     
     const batchData: any[] = [];
 
@@ -215,8 +225,8 @@ export class InspeccionListComponent implements OnInit {
         modeloMotor: 'MD-602',
         serieCabezal: 'Z' + Math.floor(Math.random() * 1000000),
         serieMotor: 'M' + Math.floor(Math.random() * 1000000),
-        mecanico: 'Darwin',
-        codigoMecanico: 'MEC-01',
+        mecanico: user?.nombreCompleto || 'Mecánico',
+        codigoMecanico: 'MEC-' + (user ? user.id : '01'),
         observaciones: 'Se realiza limpieza general y lubricación de piezas móviles.',
         pruebaCostura: true,
         revisadoPor: 'Supervisor Admin',

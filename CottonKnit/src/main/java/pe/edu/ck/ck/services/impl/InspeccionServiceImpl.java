@@ -21,6 +21,11 @@ public class InspeccionServiceImpl implements IInspeccionService {
     }
 
     @Override
+    public List<InspeccionMaquina> listarPorUsuario(Integer usuarioId) {
+        return repository.findByUsuarioId(usuarioId);
+    }
+
+    @Override
     public InspeccionMaquina guardar(InspeccionMaquina inspeccion) {
         return repository.save(inspeccion);
     }

@@ -7,6 +7,7 @@ public interface IReporteMantenimientoService {
     ReporteMantenimiento registrar(ReporteMantenimiento reporte);
     List<ReporteMantenimiento> registrarLote(List<ReporteMantenimiento> reportes);
     List<ReporteMantenimiento> listarTodo();
+    List<ReporteMantenimiento> listarPorUsuario(Integer usuarioId);
     List<ReporteMantenimiento> listarPorMaquina(String maquinaId);
     void eliminarPorLote(String batchId);
 }
